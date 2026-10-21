@@ -49,16 +49,22 @@ Ushbu loyiha zamonaviy **Oq (White) va To'q sariq (Orange)** ranglar uyg'unligid
 8. **To'liq moslashuvchan (Responsive):**
    - Kompyuter, noutbuk, planshet va smartfonlar uchun pastki mobil navigatsiya paneli bilan moslangan.
 
+9. **Headerda Dinamik QR-Kod (Mobil kirish):**
+   - Sayt header qismida real vaqtda yaratiluvchi QR-kod.
+   - Telefon kamerasi orqali skanerlanganda sayt brauzerda to'g'ridan-to'g'ri ochiladi.
+   - Katta interaktiv modal, bir klikda havolani nusxalash, QR-kod rasmini (.png) yuklab olish va o'z xohishiga ko'ra yangi domen/havola belgilash imkoniyati mavjud.
+
 ---
 
 ## 📂 Fayllar strukturasi:
 ```
 Новая папка (2)/
-├── index.html          # Asosiy sahifa
+├── index.html          # Asosiy sahifa (Headerda QR-kod va modallar bilan)
 ├── README.md           # Qo'llanma
 ├── css/
 │   └── style.css       # Oq va to'q sariq mavzusidagi maxsus CSS uslublari
 └── js/
+    ├── qrcode.min.js   # Offline QR kod generator kutubxonasi
     ├── products.js     # 24+ haqiqiy texnika va narxlar bazasi
-    └── app.js          # Savat, filtrlar, taymer va modallar mantig'i
+    └── app.js          # Savat, filtrlar, QR-kod, taymer va modallar mantig'i
 ```
