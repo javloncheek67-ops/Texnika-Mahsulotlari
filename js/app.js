@@ -810,49 +810,76 @@ function getQrTargetUrl() {
   return 'https://texnika-mahsulotlari.netlify.app/';
 }
 
-// Barcha QR kodlarni chizish (Headerdagi mini va Modal ichidagi katta QR)
-function renderQrCodes() {
-  if (typeof QRCode === 'undefined') {
-    console.warn('QRCode kutubxonasi hali yuklanmadi');
-    return;
+// QR-kodni element ichiga chizish (dublyajni tozalash va zaxira API bilan)
+function drawQrCodeToContainer(container, text, size) {
+  if (!container) return;
+  container.innerHTML = '';
+
+  let rendered = false;
+  if (typeof QRCode !== 'undefined') {
+    try {
+      new QRCode(container, {
+        text: text,
+        width: size,
+        height: size,
+        colorDark: '#0f172a',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+
+      // qrcodejs bir vaqtning o'zida canvas va img yaratadi. Dublyajni bartaraf etamiz:
+      const cleanDuplicate = () => {
+        const canvases = container.querySelectorAll('canvas');
+        const imgs = container.querySelectorAll('img');
+        if (imgs.length > 0 && imgs[0].src && imgs[0].src.startsWith('data:')) {
+          canvases.forEach(c => c.remove());
+          imgs[0].style.display = 'block';
+          imgs[0].style.width = '100%';
+          imgs[0].style.height = '100%';
+        } else if (canvases.length > 0) {
+          canvases[0].style.display = 'block';
+          canvases[0].style.width = '100%';
+          canvases[0].style.height = '100%';
+          imgs.forEach(i => i.remove());
+        }
+      };
+
+      cleanDuplicate();
+      setTimeout(cleanDuplicate, 30);
+      setTimeout(cleanDuplicate, 150);
+      rendered = true;
+    } catch (e) {
+      console.warn('QRCode kutubxonasi xatosi, zaxira rasmdan foydalaniladi:', e);
+    }
   }
 
+  // Agar biron sabab bilan chizilmasa - zaxira QR API orqali chizamiz
+  if (!rendered) {
+    const img = document.createElement('img');
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`;
+    img.alt = 'QR Code';
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.display = 'block';
+    img.style.borderRadius = '4px';
+    container.appendChild(img);
+  }
+}
+
+// Barcha QR kodlarni chizish (Headerdagi mini va Modal ichidagi katta QR)
+function renderQrCodes() {
   const targetUrl = getQrTargetUrl();
 
   // 1. Headerdagi mini QR-kod (38x38 frame ichida)
   const thumbContainer = document.getElementById('navbar-qr-thumb');
   if (thumbContainer) {
-    thumbContainer.innerHTML = '';
-    try {
-      new QRCode(thumbContainer, {
-        text: targetUrl,
-        width: 76,
-        height: 76,
-        colorDark: '#0f172a',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    } catch (e) {
-      console.error('Navbar QR xatolik:', e);
-    }
+    drawQrCodeToContainer(thumbContainer, targetUrl, 76);
   }
 
   // 2. Modaldagi katta skanerlanuvchi QR-kod (240x240)
   const modalContainer = document.getElementById('modal-qr-container');
   if (modalContainer) {
-    modalContainer.innerHTML = '';
-    try {
-      new QRCode(modalContainer, {
-        text: targetUrl,
-        width: 240,
-        height: 240,
-        colorDark: '#0f172a',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    } catch (e) {
-      console.error('Modal QR xatolik:', e);
-    }
+    drawQrCodeToContainer(modalContainer, targetUrl, 240);
   }
 
   // Havola inputini yangilash
@@ -939,12 +966,18 @@ function downloadQrCode() {
   const modalContainer = document.getElementById('modal-qr-container');
   if (!modalContainer) return;
   
-  const canvas = modalContainer.querySelector('canvas');
   const img = modalContainer.querySelector('img');
+  const canvas = modalContainer.querySelector('canvas');
   let dataUrl = '';
 
-  if (canvas) {
-    dataUrl = canvas.toDataURL('image/png');
+  if (img && img.src && img.src.startsWith('data:')) {
+    dataUrl = img.src;
+  } else if (canvas) {
+    try {
+      dataUrl = canvas.toDataURL('image/png');
+    } catch (e) {
+      console.warn(e);
+    }
   } else if (img && img.src) {
     dataUrl = img.src;
   }
